@@ -27,7 +27,7 @@ static NSString * const kDefaultServer = @"https://menstryo.github.io/svitlo";
     SVRequest *r = [[SVRequest alloc] init]; // released when finished
     r->_done = [done copy];
     r->_data = [[NSMutableData alloc] init];
-    r->_conn = [[NSURLConnection alloc] initWithRequest:req delegate:r startImmediately:NO];
+    r->_conn = [[NSClassFromString(@"NSURLConnection") alloc] initWithRequest:req delegate:r startImmediately:NO];
     [r->_conn scheduleInRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
     [r->_conn start];
 }
@@ -46,8 +46,8 @@ static NSString * const kDefaultServer = @"https://menstryo.github.io/svitlo";
 }
 
 - (void)connection:(NSURLConnection *)c willSendRequestForAuthenticationChallenge:(NSURLAuthenticationChallenge *)ch {
-    if ([ch.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
-        NSURLCredential *cred = [NSURLCredential credentialForTrust:ch.protectionSpace.serverTrust];
+    if ([ch.protectionSpace.authenticationMethod isEqualToString:@"NSURLAuthenticationMethodServerTrust"]) {
+        id cred = [NSClassFromString(@"NSURLCredential") credentialForTrust:ch.protectionSpace.serverTrust];
         [ch.sender useCredential:cred forAuthenticationChallenge:ch];
     } else {
         [ch.sender performDefaultHandlingForAuthenticationChallenge:ch];
@@ -159,7 +159,7 @@ static NSString * const kDefaultServer = @"https://menstryo.github.io/svitlo";
         done(nil, nil, e);
         return;
     }
-    NSMutableURLRequest *req = [NSMutableURLRequest requestWithURL:url
+    id req = [NSClassFromString(@"NSMutableURLRequest") requestWithURL:url
                                                        cachePolicy:NSURLRequestReloadIgnoringLocalCacheData
                                                    timeoutInterval:25];
     [req setValue:@"application/json" forHTTPHeaderField:@"Accept"];
@@ -167,7 +167,7 @@ static NSString * const kDefaultServer = @"https://menstryo.github.io/svitlo";
     [SVRequest start:req done:^(NSURLResponse *resp, NSData *data, NSError *err) {
         [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
         if (err || !data) { done(nil, nil, err ?: [NSError errorWithDomain:@"Svitlo" code:2 userInfo:nil]); return; }
-        NSInteger code = [resp isKindOfClass:[NSHTTPURLResponse class]] ? [(NSHTTPURLResponse *)resp statusCode] : 200;
+        NSInteger code = [resp respondsToSelector:@selector(statusCode)] ? [(id)resp statusCode] : 200;
         NSError *jerr = nil;
         id obj = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jerr];
         if (code >= 400) {
