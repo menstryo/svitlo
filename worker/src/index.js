@@ -10,11 +10,16 @@
 // A day is null when no schedule is published yet.
 
 const GH = "https://raw.githubusercontent.com/yaroslav2901/OE_OUTAGE_DATA/main/data/";
+// DTEK regions (Kyiv oblast, Odesa, Dnipropetrovsk oblast), same schema — MIT, github.com/Baskerville42/outage-data-ua
+const DTEK = "https://raw.githubusercontent.com/Baskerville42/outage-data-ua/main/data/";
 const YASNO = "https://app.yasno.ua/api/blackout-service/public/shutdowns/regions/";
 
 export const REGIONS = [
   { id: "kyiv",            name: "Київ",                src: "yasno", region: 25, dso: 902 },
   { id: "dnipro",          name: "Дніпро",              src: "yasno", region: 3,  dso: 301 },
+  { id: "kyiv-region",     name: "Київська",            src: "dtek", file: "kyiv-region.json" },
+  { id: "odesa",           name: "Одеська",             src: "dtek", file: "odesa.json" },
+  { id: "dnipro-region",   name: "Дніпропетровська",    src: "dtek", file: "dnipro.json" },
   { id: "kharkiv",         name: "Харківська",          src: "gh", file: "Kharkivoblenerho.json" },
   { id: "lviv",            name: "Львівська",           src: "gh", file: "Lvivoblenerho.json" },
   { id: "zaporizhzhia",    name: "Запорізька",          src: "gh", file: "Zaporizhzhiaoblenergo.json" },
@@ -50,7 +55,7 @@ const HALVES = {
 
 export function fromDtekFormat(raw, today) {
   const fact = (raw && raw.data && raw.data.fact) || raw.fact || raw.data || {};
-  const days = fact.data || {};
+  const days = fact.data && !Array.isArray(fact.data) ? fact.data : {};
   const byDate = {};
   for (const ts of Object.keys(days)) {
     const date = kyivDate(Number(ts) * 1000);
@@ -58,6 +63,9 @@ export function fromDtekFormat(raw, today) {
   }
   const tomorrow = addDays(today, 1);
   const queueIds = new Set();
+  // full queue list from the weekly preset, so regions without a fresh schedule still list queues
+  const names = raw.preset && raw.preset.sch_names;
+  if (names && typeof names === "object") Object.keys(names).forEach((k) => queueIds.add(k));
   // queues come from any published day, so stale regions still list their queues
   for (const d of Object.values(days)) {
     if (d && typeof d === "object") Object.keys(d).forEach((k) => queueIds.add(k));
@@ -124,6 +132,7 @@ export async function buildSchedule(reg) {
   const today = kyivDate(Date.now());
   let res;
   if (reg.src === "gh") res = fromDtekFormat(await getJSON(GH + reg.file), today);
+  else if (reg.src === "dtek") res = fromDtekFormat(await getJSON(DTEK + reg.file), today);
   else res = fromYasnoFormat(await getJSON(`${YASNO}${reg.region}/dsos/${reg.dso}/planned-outages`));
   return {
     id: reg.id,
