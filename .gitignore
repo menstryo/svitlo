@@ -1,0 +1,7 @@
+.theos/
+packages/
+obj/
+public/
+node_modules/
+worker/test.mjs
+.DS_Store
