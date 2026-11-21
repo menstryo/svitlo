@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Світло</title>
+<style>
+  body { margin: 0; font: 16px/1.45 -apple-system, Helvetica, Arial, sans-serif; background: #c5ccd4; color: #222; }
+  header { background: linear-gradient(#e2a92a, #c98d0f); color: #fff; text-shadow: 0 -1px 0 rgba(0,0,0,.35); padding: 14px 16px; font-weight: bold; font-size: 20px; text-align: center; border-bottom: 1px solid #8a5e05; }
+  main { max-width: 560px; margin: 0 auto; padding: 8px 16px 32px; }
+  h2 { font-size: 15px; color: #4c566c; text-shadow: 0 1px 0 #fff; margin: 20px 4px 6px; }
+  .group { background: #fff; border: 1px solid #a9abad; border-radius: 9px; overflow: hidden; }
+  .row { padding: 11px 12px; border-top: 1px solid #e0e0e0; display: flex; justify-content: space-between; gap: 12px; }
+  .row:first-child { border-top: 0; }
+  .row a { color: #385487; text-decoration: none; }
+  .muted { color: #8a8a8a; font-size: 14px; }
+  code { font-size: 13px; word-break: break-all; }
+</style>
+</head>
+<body>
+<header>Світло</header>
+<main>
+  <h2>Застосунок для iOS 6</h2>
+  <div class="group">
+    <div class="row"><a href="Svitlo.ipa">Завантажити Svitlo.ipa</a><span class="muted">3uTools / AppSync</span></div>
+  </div>
+  <h2>API</h2>
+  <div class="group">
+    <div class="row"><code>regions.json</code><span class="muted">список регіонів</span></div>
+    <div class="row"><code>schedule/&lt;id&gt;.json</code><span class="muted">графік по чергах</span></div>
+  </div>
+  <h2>Регіони</h2>
+  <div class="group" id="regions"><div class="row muted">Завантаження…</div></div>
+  <p class="muted" id="gen"></p>
+</main>
+<script>
+fetch("regions.json").then(function (r) { return r.json(); }).then(function (d) {
+  var el = document.getElementById("regions");
+  el.innerHTML = "";
+  d.regions.forEach(function (r) {
+    var row = document.createElement("div");
+    row.className = "row";
+    var a = document.createElement("a");
+    a.href = "schedule/" + r.id + ".json";
+    a.textContent = r.name;
+    var s = document.createElement("span");
+    s.className = "muted";
+    s.textContent = r.id;
+    row.appendChild(a); row.appendChild(s); el.appendChild(row);
+  });
+  document.getElementById("gen").textContent = "Оновлено: " + new Date(d.generated).toLocaleString("uk-UA");
+});
+</script>
+</body>
+</html>
